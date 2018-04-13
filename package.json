@@ -1,0 +1,22 @@
+{
+  "name": "@breathecode/api-js-wrapper",
+  "version": "1.0.0",
+  "description": "Javascript Wrapper for the BreatheCode API",
+  "main": "BreatheCodeWrapper.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/breatheco-de/api-javascript-wrapper.git"
+  },
+  "keywords": [
+    "BreatheCode"
+  ],
+  "author": "Alejandro Sanchez",
+  "license": "GPL-3.0",
+  "bugs": {
+    "url": "https://github.com/breatheco-de/api-javascript-wrapper/issues"
+  },
+  "homepage": "https://github.com/breatheco-de/api-javascript-wrapper#readme"
+}
