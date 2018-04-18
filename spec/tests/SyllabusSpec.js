@@ -7,10 +7,7 @@ describe("Syllabus", function() {
     });
     
     it("should call the proper url", function() {
-        
-        this.api.syllabus().get('full-stack').then((data) => {
-          console.log('asd');
-        });
+        this.api.syllabus().get('full-stack');
         expect(this.api.fetch).toHaveBeenCalledWith(...this.fakeAssetsRequest('get', '/syllabus/full-stack'));
     });
 
