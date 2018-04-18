@@ -4,7 +4,7 @@
   "description": "Javascript Wrapper for the BreatheCode API",
   "main": "BreatheCodeWrapper.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "jasmine"
   },
   "repository": {
     "type": "git",
@@ -18,5 +18,9 @@
   "bugs": {
     "url": "https://github.com/breatheco-de/api-javascript-wrapper/issues"
   },
-  "homepage": "https://github.com/breatheco-de/api-javascript-wrapper#readme"
+  "homepage": "https://github.com/breatheco-de/api-javascript-wrapper#readme",
+  "devDependencies": {
+    "jasmine": "^3.1.0",
+    "node-fetch": "^2.1.2"
+  }
 }

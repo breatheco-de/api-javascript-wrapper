@@ -1,8 +1,8 @@
-/* global fetch, args, localStorage */
+/* global fetch, localStorage */
 class Wrapper{
     
     constructor(){
-        this.assetsPath = process.env.ASSETS_URL+'/apis';
+        this.assetsPath = process.env.ASSETS_URL;
         this.apiPath = process.env.API_URL;
         this.token = null;
         this.pending = {
@@ -10,13 +10,24 @@ class Wrapper{
         };
     }
     
+    setOptions(options){
+        this.assetsPath = (typeof options.assetsPath !== 'undefined') ? options.assetsPath : this.assetsPath;
+        this.apiPath = (typeof options.apiPath !== 'undefined') ? options.apiPath : this.apiPath;
+    }
+    
     setToken(token){
         this.token = token;
-        localStorage.setItem('bc_token', token);
+        if(typeof localStorage !== 'undefined') localStorage.setItem('bc_token', token);
     }
     getToken(data){
         if(this.token) return this.token;
-        else return localStorage.getItem('bc_token');
+        else{
+            if(typeof localStorage !== 'undefined') return localStorage.getItem('bc_token');
+            else null;
+        } 
+    }
+    fetch(...args){
+        return fetch(...args);
     }
     
     req(method, path, args){
@@ -44,7 +55,7 @@ class Wrapper{
                 reject({ pending: true, msg: `Request ${method}: ${path} was ignored because a previous one was already pending` });
             else this.pending[method][path] = true;
             
-            fetch( path, opts)
+            this.fetch( path, opts)
             .then((resp) => {
                 this.pending[method][path] = false;
                 if(resp.status == 200) return resp.json();
@@ -105,7 +116,8 @@ class Wrapper{
         let url = this.assetsPath+'/syllabus';
         return {
             get: (slug) => {
-                return this.get(url+'/'+slug);
+                if(!slug) throw new Error('Missing slug');
+                else return this.get(url+'/'+slug);
             }
         };
     }
@@ -131,5 +143,13 @@ class Wrapper{
             }
         };
     }
+    users(){
+        let url = this.apiPath;
+        return {
+            all: () => {
+                return this.get(url+'/user/');
+            }
+        };
+    }
 }
-export default new Wrapper();
+module.exports = new Wrapper();
