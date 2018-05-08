@@ -195,5 +195,13 @@ class Wrapper{
             }
         };
     }
+    cohorts(){
+        let url = this.apiPath;
+        return {
+            get: (id) => {
+                return this.get(url+'cohort/'+id);
+            }
+        };
+    }
 }
 module.exports = new Wrapper();
