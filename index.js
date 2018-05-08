@@ -61,6 +61,7 @@ class Wrapper{
                 if(resp.status == 200) return resp.json();
                 else if(resp.status == 403) reject({ msg: 'Invalid username or password', code: 403 }); 
                 else if(resp.status == 401) reject({ msg: 'Unauthorized', code: 401 }); 
+                else if(resp.status == 400) reject({ msg: 'Invalid Argument', code: 400 }); 
                 else reject({ msg: 'Invalid username or password', code: 500 });
                 return false;
             })
@@ -143,11 +144,54 @@ class Wrapper{
             }
         };
     }
-    users(){
+    user(){
         let url = this.apiPath;
         return {
             all: () => {
                 return this.get(url+'/user/');
+            },
+            add: (args) => {
+                return this.put(url+'/user/', args);
+            },
+            update: (id, args) => {
+                return this.post(url+'/user/'+id, args);
+            },
+            delete: (id) => {
+                return this.delete(url+'/user/'+id);
+            }
+        };
+    }
+    student(){
+        let url = this.apiPath;
+        return {
+            all: () => {
+                return this.get(url+'/students/');
+            },
+            add: (args) => {
+                return this.put(url+'/student/', args);
+            },
+            update: (id, args) => {
+                return this.post(url+'/student/'+id, args);
+            },
+            delete: (id) => {
+                return this.delete(url+'/student/'+id);
+            }
+        };
+    }
+    cohort(){
+        let url = this.apiPath;
+        return {
+            all: () => {
+                return this.get(url+'/cohorts/');
+            },
+            add: (args) => {
+                return this.put(url+'/cohort/', args);
+            },
+            update: (id, args) => {
+                return this.post(url+'/cohort/'+id, args);
+            },
+            delete: (id) => {
+                return this.delete(url+'/cohort/'+id);
             }
         };
     }
