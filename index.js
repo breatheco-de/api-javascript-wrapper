@@ -4,15 +4,19 @@ class Wrapper{
     constructor(){
         this.assetsPath = process.env.ASSETS_URL;
         this.apiPath = process.env.API_URL;
+        this._debug = false;
         this.token = null;
         this.pending = {
             get: {}, post: {}, put: {}, delete: {}
         };
     }
+    _logError(error){ if(this._debug) console.error(error); }
     
     setOptions(options){
         this.assetsPath = (typeof options.assetsPath !== 'undefined') ? options.assetsPath : this.assetsPath;
         this.apiPath = (typeof options.apiPath !== 'undefined') ? options.apiPath : this.apiPath;
+        this._debug = (typeof options.debug !== 'undefined') ? options.debug : this._debug;
+        if(typeof options.token !== 'undefined') this.setToken(options.token);
     }
     
     setToken(token){
@@ -57,26 +61,29 @@ class Wrapper{
             else this.pending[method][path] = true;
             
             this.fetch( path, opts)
-            .then((resp) => {
-                this.pending[method][path] = false;
-                if(resp.status == 200) return resp.json();
-                else if(resp.status == 403) reject({ msg: 'Invalid username or password', code: 403 }); 
-                else if(resp.status == 401) reject({ msg: 'Unauthorized', code: 401 }); 
-                else if(resp.status == 400) reject({ msg: 'Invalid Argument', code: 400 }); 
-                else reject({ msg: 'There was an error, try again later', code: 500 });
-                return false;
-            })
-            .then((json) => { 
-                if(!json) throw new Error('There was a problem processing the request');
-                if(json.access_token) this.setToken(json.access_token);
-                resolve(json);
-                return json;
-            })
-            .catch((error) => {
-                this.pending[method][path] = false;
-                console.error(error.message);
-                reject(error.message);
-            });
+                .then((resp) => {
+                    this.pending[method][path] = false;
+                    if(resp.status == 200) return resp.json();
+                    else{
+                        this._logError(resp);
+                        if(resp.status == 403) reject({ msg: 'Invalid username or password', code: 403 }); 
+                        else if(resp.status == 401) reject({ msg: 'Unauthorized', code: 401 }); 
+                        else if(resp.status == 400) reject({ msg: 'Invalid Argument', code: 400 }); 
+                        else reject({ msg: 'There was an error, try again later', code: 500 });
+                    } 
+                    return false;
+                })
+                .then((json) => { 
+                    if(!json) throw new Error('There was a problem processing the request');
+                    if(json.access_token) this.setToken(json.access_token);
+                    resolve(json);
+                    return json;
+                })
+                .catch((error) => {
+                    this.pending[method][path] = false;
+                    console.error(error.message);
+                    reject(error.message);
+                });
         });
                 
     }
@@ -122,7 +129,7 @@ class Wrapper{
             }
         }
     }
-    
+
     credentials(){
         let url = this.assetsPath+'/credentials';
         return {
@@ -143,7 +150,7 @@ class Wrapper{
             }
         };
     }
-    todos(){
+    todo(){
         let url = this.apiPath;
         return {
             getByStudent: (id) => {
@@ -157,7 +164,7 @@ class Wrapper{
             }
         };
     }
-    projects(){
+    project(){
         let url = this.assetsPath;
         return {
             all: (syllabus_slug) => {
