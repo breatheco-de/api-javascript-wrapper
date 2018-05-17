@@ -19,8 +19,10 @@ import BC from '../path/to/the/index.js';
 BC.setOptions({
   assetsPath: 'http://assets.breatheco.de/apis',
   apiPath: 'http://api.breatheco.de',
+  token: 'ASDASDASDASDASASD',
 });
 
+// You can also set the token on a separate request, 
 // it will be saved in the localStorage if the localStorage is available.
 BC.setToken('ASDASDASDASDASASD');
 ```
