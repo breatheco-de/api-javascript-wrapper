@@ -65,7 +65,7 @@ BC.task().delete(2)
   .catch((error) => console.error(error)); 
   
 // update a student with id 2
-BC.location().update({
+BC.teacher().update({
     full_name: 'Mario Jones'
   }) 
   .then((result) => console.log(result.data))
