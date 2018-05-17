@@ -64,8 +64,8 @@ BC.task().delete(2)
   .then((result) => console.log(result.data))
   .catch((error) => console.error(error)); 
   
-// update a student with id 2
-BC.teacher().update({
+// update a user with id 2 (it can be a student, teacher, etc.)
+BC.user().update({
     full_name: 'Mario Jones'
   }) 
   .then((result) => console.log(result.data))
