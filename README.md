@@ -28,7 +28,7 @@ BC.setToken('ASDASDASDASDASASD');
 ```
 
 ## Doing a request
-Its always going to be like this:
+It's always going to be like this:
 
 > BC.**entity**().**action**(data=null).then(function).catch(function);
 
