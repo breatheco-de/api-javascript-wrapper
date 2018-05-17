@@ -12,7 +12,7 @@ $ git clone https://github.com/breatheco-de/api-javascript-wrapper.git
 ## Usage
 
 1. Import the library on any file where you need to use it
-```
+```js
 import BC from '../path/to/the/index.js';
 
 // set the 2 paths for the API
@@ -36,7 +36,7 @@ The actions in general can be: all, add, delete, update.
 Some entities like credentials don't behave the same way and can have special actions like "autenticate" and "remind".
 
 ## Example Requests
-```
+```js
 // login
 BC.credentials().autenticate(username, password) 
   .then((data) => console.log(data.access_token))
