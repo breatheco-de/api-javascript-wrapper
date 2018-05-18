@@ -2,7 +2,7 @@
 class Wrapper{
     
     constructor(){
-        this.assetsPath = process.env.ASSETS_URL;
+        this.assetsPath = process.env.ASSETS_URL+'/apis';
         this.apiPath = process.env.API_URL;
         this.token = null;
         this.pending = {
