@@ -219,17 +219,23 @@ class Wrapper{
             add: (args) => {
                 return this.put(url+'/cohort/', args);
             },
+            update: (id, args) => {
+                return this.post(url+'/cohort/'+id, args);
+            },
+            delete: (id) => {
+                return this.delete(url+'/cohort/'+id);
+            },
             addStudents: (cohortId, studentsArray) => {
                 studentsArray = studentsArray.map(id => {
                     return { student_id: id };
                 });
                 return this.post(url+'/student/cohort/'+cohortId, studentsArray);
             },
-            update: (id, args) => {
-                return this.post(url+'/cohort/'+id, args);
-            },
-            delete: (id) => {
-                return this.delete(url+'/cohort/'+id);
+            removeStudents: (cohortId, studentsArray) => {
+                studentsArray = studentsArray.map(id => {
+                    return { student_id: id };
+                });
+                return this.delete(url+'/student/cohort/'+cohortId, studentsArray);
             }
         };
     }
