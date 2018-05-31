@@ -19,20 +19,20 @@ import BC from '../path/to/the/index.js';
 BC.setOptions({
   assetsPath: 'http://assets.breatheco.de/apis',
   apiPath: 'http://api.breatheco.de',
-  token: 'ASDASDASDASDASASD',
+  token: 'ASDASDASDASDASASD', //optional
 });
 
-// You can also set the token on a separate request, 
+// You can also set the token on a separate function, 
 // it will be saved in the localStorage if the localStorage is available.
 BC.setToken('ASDASDASDASDASASD');
 ```
 
 ## Doing a request
-Its always going to be like this:
+It's always going to be like this:
 
 > BC.**entity**().**action**(data=null).then(function).catch(function);
 
-The entities can be: syllabus, todo, project, user, student, cohort, location, profile.
+The entities can be: syllabus, todo, project, user, student, cohort, location, profile. (more entities will be added soon).
 The actions in general can be: all, add, delete, update.
 
 Some entities like credentials don't behave the same way and can have special actions like "autenticate" and "remind".
@@ -64,8 +64,8 @@ BC.task().delete(2)
   .then((result) => console.log(result.data))
   .catch((error) => console.error(error)); 
   
-// update a student with id 2
-BC.location().update({
+// update a user with id 2 (it can be a student, teacher, etc.)
+BC.user().update({
     full_name: 'Mario Jones'
   }) 
   .then((result) => console.log(result.data))
