@@ -54,11 +54,11 @@ class Wrapper{
         };
         if(method === 'get'){
             path += this.serialize(args).toStr();
-            path += `?access_token=${this.getToken((path.substr('//assets') == -1) ? 'api':'assets')}`;
+            path += `?access_token=${this.getToken((path.indexOf('//assets') == -1) ? 'api':'assets')}`;
         } 
         else
         {
-            path += `?access_token=${this.getToken((path.substr('//assets') == -1) ? 'api':'assets')}`;
+            path += `?access_token=${this.getToken((path.indexOf('//assets') == -1) ? 'api':'assets')}`;
             //if(this.token) args.access_token = this.token;
             if((method=='post' || method=='put') && !args) throw new Error('Missing request body');
             opts.body = this.serialize(args).toJSON();
