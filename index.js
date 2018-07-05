@@ -4,8 +4,9 @@ class Wrapper{
     constructor(){
         this.assetsPath = (typeof process != 'undefined') ? process.env.ASSETS_URL+'/apis' : null;
         this.apiPath = (typeof process != 'undefined') ? process.env.API_URL : null;
+        this.token = (typeof process != 'undefined') ? process.env.API_TOKEN : null;
+        this.assetsToken = (typeof process != 'undefined') ? process.env.ASSETS_TOKEN : null;
         this._debug = false;
-        this.token = null;
         this.pending = {
             get: {}, post: {}, put: {}, delete: {}
         };
@@ -16,14 +17,21 @@ class Wrapper{
         this.assetsPath = (typeof options.assetsPath !== 'undefined') ? options.assetsPath : this.assetsPath;
         this.apiPath = (typeof options.apiPath !== 'undefined') ? options.apiPath : this.apiPath;
         this._debug = (typeof options.debug !== 'undefined') ? options.debug : this._debug;
-        if(typeof options.token !== 'undefined') this.setToken(options.token);
+        if(typeof options.token !== 'undefined') this.setToken({bc_token: options.token});
+        if(typeof options.assetsToken !== 'undefined') this.setToken({assets_token: options.assetsToken});
     }
     
     setToken({bc_token, assets_token}){
-        this.token = bc_token;
-        this.assetsToken = assets_token;
-        if(typeof localStorage !== 'undefined') localStorage.setItem('bc_token', bc_token);
-        if(typeof localStorage !== 'undefined') localStorage.setItem('bc_assets_token', assets_token);
+        if(typeof bc_token != 'undefined')
+        {
+            this.token = bc_token;
+            if(typeof localStorage !== 'undefined') localStorage.setItem('bc_token', bc_token);
+        }
+        if(typeof assets_token != 'undefined')
+        {
+            this.assetsToken = assets_token;
+            if(typeof localStorage !== 'undefined') localStorage.setItem('bc_assets_token', assets_token);
+        }
     }
     getToken(key=''){
         const tokens = {
