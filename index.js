@@ -25,11 +25,14 @@ class Wrapper{
         if(typeof localStorage !== 'undefined') localStorage.setItem('bc_token', bc_token);
         if(typeof localStorage !== 'undefined') localStorage.setItem('bc_assets_token', assets_token);
     }
-    getToken(key){
-        return {
+    getToken(key=''){
+        const tokens = {
             bc_token: (this.token) ? this.token : (typeof localStorage !== 'undefined') ? localStorage.getItem('bc_token') : null,
             assets_token: (this.assetsToken) ? this.assetsToken : (typeof localStorage !== 'undefined') ? localStorage.getItem('bc_assets_token') : null
         };
+        if(key=='assets') return tokens.assets_token;
+        else if(key=='api') return tokens.bc_token;
+        else return tokens;
     }
     fetch(...args){
         return fetch(...args);
@@ -43,13 +46,11 @@ class Wrapper{
         };
         if(method === 'get'){
             path += this.serialize(args).toStr();
-            this.token = this.getToken().bc_token;
-            if(this.token) path += `?access_token=${this.token}`;
+            path += `?access_token=${this.getToken((path.substr('//assets') == -1) ? 'api':'assets')}`;
         } 
         else
         {
-            this.token = this.getToken().bc_token;
-            if(this.token) path += `?access_token=${this.token}`;
+            path += `?access_token=${this.getToken((path.substr('//assets') == -1) ? 'api':'assets')}`;
             //if(this.token) args.access_token = this.token;
             if((method=='post' || method=='put') && !args) throw new Error('Missing request body');
             opts.body = this.serialize(args).toJSON();
@@ -192,6 +193,7 @@ class Wrapper{
     }
     event(){
         let url = this.assetsPath;
+        this.token
         return {
             all: () => {
                 return this.get(url+'/event/all');
