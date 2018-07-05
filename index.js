@@ -2,8 +2,8 @@
 class Wrapper{
     
     constructor(){
-        this.assetsPath = process.env.ASSETS_URL+'/apis';
-        this.apiPath = process.env.API_URL;
+        this.assetsPath = (typeof process != 'undefined') ? process.env.ASSETS_URL+'/apis' : null;
+        this.apiPath = (typeof process != 'undefined') ? process.env.API_URL : null;
         this._debug = false;
         this.token = null;
         this.pending = {
@@ -19,16 +19,17 @@ class Wrapper{
         if(typeof options.token !== 'undefined') this.setToken(options.token);
     }
     
-    setToken(token){
-        this.token = token;
-        if(typeof localStorage !== 'undefined') localStorage.setItem('bc_token', token);
+    setToken({bc_token, assets_token}){
+        this.token = bc_token;
+        this.assetsToken = assets_token;
+        if(typeof localStorage !== 'undefined') localStorage.setItem('bc_token', bc_token);
+        if(typeof localStorage !== 'undefined') localStorage.setItem('bc_assets_token', assets_token);
     }
-    getToken(data){
-        if(this.token) return this.token;
-        else{
-            if(typeof localStorage !== 'undefined') return localStorage.getItem('bc_token');
-            else null;
-        } 
+    getToken(key){
+        return {
+            bc_token: (this.token) ? this.token : (typeof localStorage !== 'undefined') ? localStorage.getItem('bc_token') : null,
+            assets_token: (this.assetsToken) ? this.assetsToken : (typeof localStorage !== 'undefined') ? localStorage.getItem('bc_assets_token') : null
+        };
     }
     fetch(...args){
         return fetch(...args);
@@ -42,12 +43,12 @@ class Wrapper{
         };
         if(method === 'get'){
             path += this.serialize(args).toStr();
-            this.token = this.getToken();
+            this.token = this.getToken().bc_token;
             if(this.token) path += `?access_token=${this.token}`;
         } 
         else
         {
-            this.token = this.getToken();
+            this.token = this.getToken().bc_token;
             if(this.token) path += `?access_token=${this.token}`;
             //if(this.token) args.access_token = this.token;
             if((method=='post' || method=='put') && !args) throw new Error('Missing request body');
@@ -189,6 +190,26 @@ class Wrapper{
             }
         };
     }
+    event(){
+        let url = this.assetsPath;
+        return {
+            all: () => {
+                return this.get(url+'/event/all');
+            },
+            get: (id) => {
+                return this.get(url+'/event/'+id);
+            },
+            add: (args) => {
+                return this.put(url+'/event/', args);
+            },
+            update: (id, args) => {
+                return this.post(url+'/event/'+id, args);
+            },
+            delete: (id) => {
+                return this.delete(url+'/event/'+id);
+            }
+        };
+    }
     student(){
         let url = this.apiPath;
         let assetsURL = this.assetsPath;
@@ -280,4 +301,5 @@ class Wrapper{
         };
     }
 }
-module.exports = new Wrapper();
+if(typeof module != 'undefined') module.exports = new Wrapper();
+window.BC = new Wrapper();
