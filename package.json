@@ -1,6 +1,6 @@
 {
   "name": "@breathecode/api-js-wrapper",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "description": "Javascript Wrapper for the BreatheCode API",
   "main": "index.js",
   "scripts": {
