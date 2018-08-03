@@ -1,4 +1,4 @@
-/* global fetch, localStorage */
+/* global fetch, localStorage, window */
 class Wrapper{
     
     constructor(){
@@ -7,6 +7,7 @@ class Wrapper{
         this.token = (typeof process != 'undefined') ? process.env.API_TOKEN : null;
         this.assetsToken = (typeof process != 'undefined') ? process.env.ASSETS_TOKEN : null;
         this._debug = false;
+        this.automaticLogout = true;
         this.pending = {
             get: {}, post: {}, put: {}, delete: {}
         };
@@ -16,6 +17,7 @@ class Wrapper{
     setOptions(options){
         this.assetsPath = (typeof options.assetsPath !== 'undefined') ? options.assetsPath : this.assetsPath;
         this.apiPath = (typeof options.apiPath !== 'undefined') ? options.apiPath : this.apiPath;
+        this.automaticLogout = (typeof options.automaticLogout !== 'undefined') ? options.automaticLogout : this.automaticLogout;
         this._debug = (typeof options.debug !== 'undefined') ? options.debug : this._debug;
         if(typeof options.token !== 'undefined') this.setToken({bc_token: options.token});
         if(typeof options.assetsToken !== 'undefined') this.setToken({assets_token: options.assetsToken});
@@ -77,7 +79,10 @@ class Wrapper{
                     else{
                         this._logError(resp);
                         if(resp.status == 403) reject({ msg: 'Invalid username or password', code: 403 }); 
-                        else if(resp.status == 401) reject({ msg: 'Unauthorized', code: 401 }); 
+                        else if(resp.status == 401){
+                            reject({ msg: 'Unauthorized', code: 401 }); 
+                            if(this.automaticLogout) window.location.href="/login";
+                        } 
                         else if(resp.status == 400) reject({ msg: 'Invalid Argument', code: 400 }); 
                         else reject({ msg: 'There was an error, try again later', code: 500 });
                     } 
@@ -137,7 +142,7 @@ class Wrapper{
             toJSON: function(){
                 return JSON.stringify(this.obj);
             }
-        }
+        };
     }
 
     credentials(){
