@@ -2,67 +2,56 @@
 class Wrapper{
     
     constructor(){
-        this.assetsPath = (typeof process != 'undefined') ? process.env.ASSETS_URL+'/apis' : null;
-        this.apiPath = (typeof process != 'undefined') ? process.env.API_URL : null;
-        this.token = (typeof process != 'undefined') ? process.env.API_TOKEN : null;
-        this.assetsToken = (typeof process != 'undefined') ? process.env.ASSETS_TOKEN : null;
-        this._debug = false;
-        this.automaticLogout = true;
+        this.options = {
+            assetsPath: (typeof process != 'undefined') ? process.env.ASSETS_URL+'/apis' : null,
+            apiPath: (typeof process != 'undefined') ? process.env.API_URL : null,
+            _debug: (typeof process != 'undefined') ? process.env.DEBUG : false,
+            getToken: (type='api') => {
+                return null;
+            },
+            onLoading: null,
+            onLogout: null
+        };
+        this.isPending = false;
         this.pending = {
             get: {}, post: {}, put: {}, delete: {}
         };
     }
-    _logError(error){ if(this._debug) console.error(error); }
-    
-    setOptions(options){
-        this.assetsPath = (typeof options.assetsPath !== 'undefined') ? options.assetsPath : this.assetsPath;
-        this.apiPath = (typeof options.apiPath !== 'undefined') ? options.apiPath : this.apiPath;
-        this.automaticLogout = (typeof options.automaticLogout !== 'undefined') ? options.automaticLogout : this.automaticLogout;
-        this._debug = (typeof options.debug !== 'undefined') ? options.debug : this._debug;
-        if(typeof options.token !== 'undefined') this.setToken({bc_token: options.token});
-        if(typeof options.assetsToken !== 'undefined') this.setToken({assets_token: options.assetsToken});
-    }
-    
-    setToken({bc_token, assets_token}){
-        if(typeof bc_token != 'undefined')
-        {
-            this.token = bc_token;
-            if(typeof localStorage !== 'undefined') localStorage.setItem('bc_token', bc_token);
+    calculatePending(){
+        for(let method in this.pending)
+            for(let path in this.pending[method])
+                if(typeof this.pending[method] != 'undefined' && this.pending[method][path] === true){
+                    if(!this.isPending){
+                        this.isPending = true;
+                        if(typeof this.options.onLoading == 'function') this.options.onLoading(this.isPending);
+                    }
+                    return true;
+                } 
+        
+        if(this.isPending){
+            this.isPending = false;
+            if(typeof this.options.onLoading == 'function') this.options.onLoading(this.isPending);
         }
-        if(typeof assets_token != 'undefined')
-        {
-            this.assetsToken = assets_token;
-            if(typeof localStorage !== 'undefined') localStorage.setItem('bc_assets_token', assets_token);
-        }
+        return false;
     }
-    getToken(key=''){
-        const tokens = {
-            bc_token: (this.token) ? this.token : (typeof localStorage !== 'undefined') ? localStorage.getItem('bc_token') : null,
-            assets_token: (this.assetsToken) ? this.assetsToken : (typeof localStorage !== 'undefined') ? localStorage.getItem('bc_assets_token') : null
-        };
-        if(key=='assets') return tokens.assets_token;
-        else if(key=='api') return tokens.bc_token;
-        else return tokens;
+    _logError(error){ if(this.options._debug) console.error(error); }
+    setOptions(options){ 
+        this.options = Object.assign(this.options, options); 
     }
-    fetch(...args){
-        return fetch(...args);
-    }
-    
+    fetch(...args){ return fetch(...args); }
     req(method, path, args){
         
+        const token = this.options.getToken((path.indexOf('//assets') == -1) ? 'api':'assets');
         let opts = { 
             method, 
             headers: {'Content-Type': 'application/json'}
         };
-        if(method === 'get'){
-            path += this.serialize(args).toStr();
-            path += `?access_token=${this.getToken((path.indexOf('//assets') == -1) ? 'api':'assets')}`;
-        } 
+        if(token) opts.headers['Authorization'] = token;
+        
+        if(method === 'get') path += this.serialize(args).toStr();
         else
         {
-            path += `?access_token=${this.getToken((path.indexOf('//assets') == -1) ? 'api':'assets')}`;
-            //if(this.token) args.access_token = this.token;
-            if((method=='post' || method=='put') && !args) throw new Error('Missing request body');
+            if((method=='put') && !args) throw new Error('Missing request body');
             opts.body = this.serialize(args).toJSON();
         } 
         
@@ -72,31 +61,45 @@ class Wrapper{
                 reject({ pending: true, msg: `Request ${method}: ${path} was ignored because a previous one was already pending` });
             else this.pending[method][path] = true;
             
+            //recalculate to check if it there is pending requests
+            this.calculatePending();
+            
             this.fetch( path, opts)
                 .then((resp) => {
                     this.pending[method][path] = false;
+                    //recalculate to check if it there is pending requests
+                    this.calculatePending();
+                    
                     if(resp.status == 200) return resp.json();
                     else{
                         this._logError(resp);
                         if(resp.status == 403) reject({ msg: 'Invalid username or password', code: 403 }); 
                         else if(resp.status == 401){
                             reject({ msg: 'Unauthorized', code: 401 }); 
-                            if(this.automaticLogout) window.location.href="/login";
+                            if(this.options.onLogout) this.options.onLogout();
                         } 
-                        else if(resp.status == 400) reject({ msg: 'Invalid Argument', code: 400 }); 
+                        else if(resp.status == 400) resp.json()
+                                                        .then(err => 
+                                                            reject({ msg: err.msg || err, code: 400 })
+                                                        )
+                                                        .catch(() =>
+                                                            reject({ msg: 'Invalid Argument', code: 400 })
+                                                        ) 
                         else reject({ msg: 'There was an error, try again later', code: 500 });
                     } 
                     return false;
                 })
                 .then((json) => { 
                     if(!json) throw new Error('There was a problem processing the request');
-                    if(json.access_token) this.setToken(json.access_token);
                     resolve(json);
                     return json;
                 })
                 .catch((error) => {
                     this.pending[method][path] = false;
-                    console.error(error.message);
+                    //recalculate to check if it there is pending requests
+                    this.calculatePending();
+                    
+                    this._logError(error.message);
                     reject(error.message);
                 });
         });
@@ -146,18 +149,18 @@ class Wrapper{
     }
 
     credentials(){
-        let url = this.assetsPath+'/credentials';
+        let url = this.options.assetsPath+'/credentials';
         return {
             autenticate: (username, password) => {
                 return this.post(url+'/auth', { username, password });
             },
             remind: (username) => {
-                return this.post(this.apiPath+'/remind/user/'+encodeURIComponent(username), { username });
+                return this.post(url+'/remind/'+encodeURIComponent(username), { username });
             }
         };
     }
     syllabus(){
-        let url = this.assetsPath+'/syllabus';
+        let url = this.options.assetsPath+'/syllabus';
         return {
             get: (slug) => {
                 if(!slug) throw new Error('Missing slug');
@@ -166,7 +169,7 @@ class Wrapper{
         };
     }
     todo(){
-        let url = this.apiPath;
+        let url = this.options.apiPath;
         return {
             getByStudent: (id) => {
                 return this.get(url+'/student/'+id+'/task/');
@@ -180,7 +183,7 @@ class Wrapper{
         };
     }
     project(){
-        let url = this.assetsPath;
+        let url = this.options.assetsPath;
         return {
             all: (syllabus_slug) => {
                 return this.get(url+'/project/all');
@@ -188,7 +191,7 @@ class Wrapper{
         };
     }
     user(){
-        let url = this.apiPath;
+        let url = this.options.apiPath;
         return {
             all: () => {
                 return this.get(url+'/user/');
@@ -205,8 +208,8 @@ class Wrapper{
         };
     }
     event(){
-        let url = this.assetsPath;
-        this.token
+        let url = this.options.assetsPath;
+        //this.options.token
         return {
             all: () => {
                 return this.get(url+'/event/all');
@@ -226,8 +229,8 @@ class Wrapper{
         };
     }
     student(){
-        let url = this.apiPath;
-        let assetsURL = this.assetsPath;
+        let url = this.options.apiPath;
+        let assetsURL = this.options.assetsPath;
         return {
             all: () => {
                 return this.get(url+'/students/');
@@ -243,8 +246,23 @@ class Wrapper{
             }
         };
     }
+    message(){
+        //let url = this.options.apiPath;
+        let assetsURL = this.options.assetsPath;
+        return {
+            getByStudent: (student_id, args=[]) => {
+                return this.get(assetsURL+'/message/student/'+student_id, args);
+            },
+            templates: () => {
+                return this.get(assetsURL+'/message/templates');
+            },
+            markAs: (messageId, status) => {
+                return this.post(assetsURL+'/message/'+messageId+'/'+status);
+            },
+        };
+    }
     cohort(){
-        let url = this.apiPath;
+        let url = this.options.apiPath;
         return {
             all: () => {
                 return this.get(url+'/cohorts/');
@@ -276,7 +294,7 @@ class Wrapper{
         };
     }
     location(){
-        let url = this.apiPath;
+        let url = this.options.apiPath;
         return {
             all: () => {
                 return this.get(url+'/locations/');
@@ -296,7 +314,7 @@ class Wrapper{
         };
     }
     profile(){
-        let url = this.apiPath;
+        let url = this.options.apiPath;
         return {
             all: () => {
                 return this.get(url+'/profiles/');
@@ -312,6 +330,41 @@ class Wrapper{
             },
             delete: (id) => {
                 return this.delete(url+'/profile/'+id);
+            }
+        };
+    }
+    lessons(){
+        let url = this.options.assetsPath;
+        return {
+            all: () => {
+                return this.get(url+'/lesson/all');
+            },
+            get: (id) => {
+                return this.get(url+'/lessons/'+id);
+            }
+        };
+    }
+    catalog(){
+        let url = this.options.apiPath;
+        return {
+            all: () => {
+                return this.get(url+'/catalogs/');
+            },
+            get: (slug=null) => {
+                if(!slug) throw new Error('Missing catalog slug');
+                return this.get(url+'/catalog/'+slug);
+            }
+        };
+    }
+    zap(){
+        let url = this.options.assetsPath;
+        return {
+            all: () => {
+                return this.get(url+'/zap/all');
+            },
+            execute: (slug=null) => {
+                if(!slug) throw new Error('Missing zap slug');
+                return this.post(url+'/zap/execute/'+slug);
             }
         };
     }
